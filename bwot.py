@@ -1,7 +1,9 @@
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Grid
+from textual.geometry import clamp
 from textual.reactive import var
+from textual.validation import Integer
 from textual.widgets import Input, Label
 
 
@@ -35,11 +37,23 @@ class BwotApp(App):
             for col in columns:
                 yield Label(col, classes="heading")
 
-            yield Input(f"{self.a}", id="input-a", type="integer", compact=True)
+            yield Input(
+                f"{self.a}",
+                id="input-a",
+                type="integer",
+                validators=Integer(0, 255),
+                compact=True,
+            )
             for _ in range(3):
                 yield Label(f"{self.a:08b}", classes="binary-a")
 
-            yield Input(f"{self.b}", id="input-b", type="integer", compact=True)
+            yield Input(
+                f"{self.b}",
+                id="input-b",
+                type="integer",
+                validators=Integer(0, 255),
+                compact=True,
+            )
             for _ in range(3):
                 yield Label(f"{self.b:08b}", classes="binary-b")
 
@@ -63,15 +77,22 @@ class BwotApp(App):
         self.query_one("#result-or", Label).update(f"{self.a | self.b:08b}")
         self.query_one("#result-xor", Label).update(f"{self.a ^ self.b:08b}")
 
-    @on(Input.Submitted, "#input-a")
-    @on(Input.Blurred, "#input-a")
-    def on_input_a_submitted(self, event: Input.Submitted) -> None:
-        self.a = int(event.value)
+    @on(Input.Blurred)
+    @on(Input.Submitted)
+    def on_input_blurred_or_submitted(
+        self, event: Input.Blurred | Input.Submitted
+    ) -> None:
+        input = event.input
+        validation_result = event.validation_result
+        assert validation_result is not None
+        if not validation_result.is_valid:
+            clamped_value = clamp(int(event.value), 0, 255)
+            input.value = str(clamped_value)
 
-    @on(Input.Submitted, "#input-b")
-    @on(Input.Blurred, "#input-b")
-    def on_input_b_submitted(self, event: Input.Submitted) -> None:
-        self.b = int(event.value)
+        if input.id == "input-a":
+            self.a = int(input.value)
+        elif input.id == "input-b":
+            self.b = int(input.value)
 
 
 if __name__ == "__main__":
