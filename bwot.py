@@ -4,17 +4,26 @@ from textual.containers import Grid
 from textual.geometry import clamp
 from textual.reactive import var
 from textual.validation import Integer
-from textual.widgets import Input, Label
+from textual.widgets import Footer, Input, Label
 
 
 class BwotApp(App):
+    BINDINGS = [
+        ("ctrl+q", "quit", "Quit"),
+    ]
+
     CSS = """
+    Screen {
+        border: none;
+    }
+
     #bwot-grid {
         layout: grid;
         height: auto;
         width: auto;
         grid-size: 4;
         grid-columns: 10;
+        margin: 1;
 
         .heading {
             text-style: bold;
@@ -62,6 +71,8 @@ class BwotApp(App):
             yield Label(f"{self.a | self.b:08b}", id="result-or", classes="result")
             yield Label(f"{self.a ^ self.b:08b}", id="result-xor", classes="result")
 
+        yield Footer()
+
     def watch_a(self) -> None:
         for label in self.query(".binary-a").results(Label):
             label.update(f"{self.a:08b}")
@@ -103,4 +114,4 @@ class BwotApp(App):
 
 if __name__ == "__main__":
     app = BwotApp()
-    app.run()
+    app.run(inline=True)
