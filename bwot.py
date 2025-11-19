@@ -86,8 +86,14 @@ class BwotApp(App):
         validation_result = event.validation_result
         assert validation_result is not None
         if not validation_result.is_valid:
-            clamped_value = clamp(int(event.value), 0, 255)
-            input.value = str(clamped_value)
+            failure = validation_result.failures[0]
+            # If the value is not a number, set the input to zero.
+            if isinstance(failure, Integer.NotANumber):
+                input.value = str(0)
+            # If the value is not in range, set the input to the clamped value.
+            elif isinstance(failure, Integer.NotInRange):
+                clamped_value = clamp(int(event.value), 0, 255)
+                input.value = str(clamped_value)
 
         if input.id == "input-a":
             self.a = int(input.value)
